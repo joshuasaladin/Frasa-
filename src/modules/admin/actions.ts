@@ -72,7 +72,8 @@ export async function inviteUser(_prev: ActionState, form: FormData): Promise<Ac
   const supabase = await createClient();
   const { error: profileError } = await supabase
     .from("profiles")
-    .update({ full_name: parsed.data.full_name, role: parsed.data.role, freight_access: parsed.data.freight_access })
+    // is_active: accounts are created inactive unless an admin vouches for them (see migration 000800).
+    .update({ full_name: parsed.data.full_name, role: parsed.data.role, freight_access: parsed.data.freight_access, is_active: true })
     .eq("id", data.user.id);
   if (profileError) return fail(`Invited, but the role could not be set: ${dbMessage(profileError)}`);
   const membershipError = await syncMemberships(data.user.id, memberships);
