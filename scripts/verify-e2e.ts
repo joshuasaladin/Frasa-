@@ -55,6 +55,7 @@ async function newPage(browser: Browser, viewport = { width: 1280, height: 900 }
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
   page.setDefaultTimeout(15_000);
+  page.on("dialog", (dialog) => void dialog.accept()); // "Are you sure?" prompts
   return page;
 }
 
@@ -154,13 +155,13 @@ try {
     check("the department lead assigns a shared task to the employee", await leadPage.getByText("Emilio Employee").first().isVisible());
 
     await empPage.goto(`${APP}/`);
-    const row = empPage.getByRole("link", { name: /VERIFY Request quote for branded cups/ }).first();
+    const row = empPage.locator('a[href^="/tasks/"]', { hasText: "VERIFY Request quote for branded cups" }).first();
     check("it appears under 'Due today' on the employee's My Work page", await row.isVisible());
     check("the employee has an unread 'Assigned to you' reminder", await empPage.getByText(/Assigned to you: VERIFY Request quote/).first().isVisible());
     await shot(empPage, "e2e-employee-home-phone");
     await row.click();
     await empPage.waitForURL(taskUrl);
-    await empPage.getByRole("button", { name: /Confirm specification/ }).click();
+    await empPage.getByRole("button", { name: "Confirm specification", exact: true }).click();
     await empPage.getByText("1 of 2 done").waitFor();
     await empPage.getByLabel("Comment").fill("Quote requested from the supplier.");
     await empPage.getByRole("button", { name: "Add comment" }).click();
@@ -171,7 +172,7 @@ try {
     const { data: task } = await service.from("tasks").select("status, completed_by, owner_id").like("title", "VERIFY Request quote%").single();
     check("the employee ticks a step, comments and marks the task done", task?.status === "done" && task.completed_by === task.owner_id);
     await empPage.goto(`${APP}/`);
-    check("the finished task leaves My Work", !(await empPage.getByRole("link", { name: /VERIFY Request quote for branded cups/ }).first().isVisible().catch(() => false)));
+    check("the finished task leaves My Work", !(await empPage.locator('a[href^="/tasks/"]', { hasText: "VERIFY Request quote for branded cups" }).first().isVisible().catch(() => false)));
     await leadPage.goto(taskUrl);
     check("the lead sees the completion in the task history", await leadPage.getByText(/changed the status from To do to Done/).isVisible());
   }
@@ -181,19 +182,18 @@ try {
   let sopUrl = "";
   {
     await leadPage.goto(`${APP}/sops/new`);
-    await leadPage.getByLabel("Title").fill("VERIFY Receiving a supplier quote");
-    await leadPage.getByLabel("Department").selectOption({ label: "Purchasing" });
+    await leadPage.locator("[name=title]").fill("VERIFY Receiving a supplier quote");
+    await leadPage.locator("select[name=department_id]").selectOption({ label: "Purchasing" });
     await leadPage.getByRole("button", { name: "Create draft" }).click();
     await leadPage.waitForURL(/\/sops\/[0-9a-f-]{36}\/edit/);
     sopUrl = leadPage.url().replace(/\/edit.*$/, "");
-    await leadPage.getByLabel(/Purpose/).fill("Make sure every quote can be compared.");
-    await leadPage.getByLabel(/Next review date/).fill("2027-06-30");
-    await leadPage.getByLabel(/Tags/).fill("quote, supplier");
-    const stepTitle = leadPage.getByPlaceholder(/step/i).first();
-    if (!(await stepTitle.isVisible().catch(() => false))) await leadPage.getByRole("button", { name: /Add (a )?step/i }).click();
-    await leadPage.getByPlaceholder(/step/i).first().fill("Check the quote is complete");
+    await leadPage.locator("[name=purpose]").fill("Make sure every quote can be compared.");
+    await leadPage.locator("[name=next_review_date]").fill("2027-06-30");
+    await leadPage.locator("[name=tags]").fill("quote, supplier");
+    if (!(await leadPage.getByLabel("Step 1 title").isVisible().catch(() => false))) await leadPage.getByRole("button", { name: /Add (a |another )?step/i }).click();
+    await leadPage.getByLabel("Step 1 title").fill("Check the quote is complete");
     await leadPage.getByLabel(/Request acknowledgment/).check();
-    await leadPage.getByRole("button", { name: /publish/i }).click();
+    await leadPage.locator("button[name=intent][value=publish]").click();
     await leadPage.waitForURL(sopUrl);
     check("the lead writes and publishes version 1, requesting acknowledgment", await leadPage.getByText("Check the quote is complete").isVisible());
 
@@ -213,15 +213,15 @@ try {
     // Revision: employees keep seeing v1 until v2 is published.
     await leadPage.getByRole("button", { name: "Start a revision" }).first().click();
     await leadPage.waitForURL(/\/edit/);
-    await leadPage.getByLabel(/Purpose/).fill("Make sure every quote can be compared. Revised: include lead time.");
-    await leadPage.getByRole("button", { name: /Save draft/ }).click();
+    await leadPage.locator("[name=purpose]").fill("Make sure every quote can be compared. Revised: include lead time.");
+    await leadPage.locator("button[name=intent][value=save]").click();
     await leadPage.getByText(/saved/i).first().waitFor();
     await empPage.goto(sopUrl);
     check("while the revision is a draft, the employee still sees version 1", !(await empPage.getByText(/Revised: include lead time/).isVisible().catch(() => false)) && (await empPage.getByText("Make sure every quote can be compared.").first().isVisible()));
     await leadPage.reload();
     await leadPage.getByLabel(/Request acknowledgment/).check();
-    await leadPage.getByLabel(/change/i).first().fill("Added lead time");
-    await leadPage.getByRole("button", { name: /publish/i }).click();
+    await leadPage.locator("[name=change_summary]").fill("Added lead time");
+    await leadPage.locator("button[name=intent][value=publish]").click();
     await leadPage.waitForURL(sopUrl);
     await empPage.goto(sopUrl);
     check("after publishing, the employee sees version 2", await empPage.getByText(/Revised: include lead time/).first().isVisible());
@@ -260,12 +260,12 @@ try {
     // A charge that cannot divide evenly: USD 1000.01 by case count over 100/200/300 cases.
     await leadPage.getByRole("button", { name: "+ Add charge" }).click();
     await leadPage.getByPlaceholder("e.g. Ocean freight").nth(0).fill("Ocean freight");
-    await leadPage.getByLabel("Amount").nth(0).fill("1000.01");
-    await leadPage.getByLabel("Allocate").nth(0).selectOption("cases");
+    await leadPage.getByLabel("Amount", { exact: true }).nth(0).fill("1000.01");
+    await leadPage.locator('label:has-text("Allocate") select').nth(0).selectOption("cases");
     await leadPage.getByRole("button", { name: "+ Add charge" }).click();
     await leadPage.getByPlaceholder("e.g. Ocean freight").nth(1).fill("Insurance");
-    await leadPage.getByLabel("Amount").nth(1).fill("100.00");
-    await leadPage.getByLabel("Allocate").nth(1).selectOption("value");
+    await leadPage.getByLabel("Amount", { exact: true }).nth(1).fill("100.00");
+    await leadPage.locator('label:has-text("Allocate") select').nth(1).selectOption("value");
     await shot(leadPage, "e2e-freight-editor");
     await leadPage.getByRole("button", { name: /^Save/ }).click();
     await leadPage.waitForURL(/\/freight\/[0-9a-f-]{36}(\?.*)?$/);
@@ -326,8 +326,9 @@ try {
     await shot(adminPage, "e2e-admin-audit");
     await adminPage.goto(`${APP}/admin/jobs`);
     await adminPage.getByRole("button", { name: "Run now" }).click();
-    await adminPage.getByText("admin").first().waitFor();
-    check("the admin can run the background jobs and see the log", await adminPage.getByRole("cell", { name: "Recurring tasks" }).first().isVisible());
+    await adminPage.locator("td", { hasText: /^admin$/ }).first().waitFor();
+    const { data: runs } = await service.from("job_runs").select("job_name, status").eq("triggered_by", "admin");
+    check("the admin can run the background jobs and see the log", runs?.length === 3 && runs.every((r) => r.status === "success") && (await adminPage.locator("td", { hasText: "Recurring tasks" }).first().isVisible()), JSON.stringify(runs));
   }
 } catch (error) {
   failures.push(`Stopped early: ${(error as Error).message.split("\n")[0]}`);
