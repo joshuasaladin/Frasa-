@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* Frasa HQ palette: dark green navigation, warm paper background, Frasa orange accents. */
+@theme {
+  --color-forest-950: #16271c;
+  --color-forest-900: #1f3527;
+  --color-forest-800: #2a4534;
+  --color-forest-700: #35573f;
+  --color-forest-600: #2f7d4f;
+  --color-forest-100: #e3f0e6;
+  --color-paper: #f6f4ee;
+  --color-line: #e6e2d8;
+  --color-ink: #1b1c18;
+  --color-muted: #6d6e63;
+  --color-brand: #fa5005;
+  --color-brand-600: #e04603;
+  --color-brand-100: #ffe8dc;
+  --color-nav-active: #5a4424;
+  --color-steel: #8a8a8a;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+/* Let grid and flex children shrink so long titles truncate instead of widening the page on phones. */
+.grid > * { min-width: 0; }
+body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); }
+
+@layer components {
+  .card { @apply rounded-xl border border-line bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]; }
+  .card-header { @apply flex items-center justify-between gap-3 border-b border-line px-4 py-3; }
+  .card-title { @apply text-[15px] font-semibold text-ink; }
+  .eyebrow { @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-muted; }
+  .btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-sm font-semibold text-ink transition hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10; }
+  .btn-primary { @apply border-forest-900 bg-forest-900 text-white hover:bg-forest-800; }
+  .btn-accent { @apply border-brand bg-brand text-white hover:bg-brand-600; }
+  .btn-danger { @apply border-red-200 bg-white text-red-700 hover:bg-red-50; }
+  .btn-sm { @apply min-h-9 px-3 text-[13px] sm:min-h-8; }
+  .input { @apply block min-h-11 w-full rounded-lg border border-line bg-white px-3 text-[15px] text-ink placeholder:text-muted/70 focus:border-forest-700 focus:outline-none focus:ring-2 focus:ring-forest-700/20 sm:min-h-10 sm:text-sm; }
+  textarea.input { @apply py-2; }
+  .label { @apply mb-1 block text-[13px] font-semibold text-ink; }
+  .hint { @apply mt-1 text-xs text-muted; }
+  .badge { @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold; }
+  .badge-gray { @apply border-line bg-paper text-muted; }
+  .badge-green { @apply border-green-200 bg-forest-100 text-forest-600; }
+  .badge-orange { @apply border-orange-200 bg-brand-100 text-brand-600; }
+  .badge-red { @apply border-red-200 bg-red-50 text-red-700; }
+  .badge-blue { @apply border-blue-200 bg-blue-50 text-blue-700; }
+  .badge-amber { @apply border-amber-200 bg-amber-50 text-amber-800; }
+  .link { @apply font-medium text-forest-600 underline-offset-2 hover:underline; }
+  .table { @apply w-full border-collapse text-sm; }
+  .table th { @apply border-b border-line px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted; }
+  .table td { @apply border-b border-line px-3 py-2.5 align-top; }
+  .table tr:last-child td { @apply border-b-0; }
+  .num { @apply text-right tabular-nums; }
+}
