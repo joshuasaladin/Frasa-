@@ -1,0 +1,24 @@
+# Render Blueprint for Frasa HQ.
+# In Render: choose the Frasa workspace, then New > Blueprint, pick this repository and branch.
+# Render asks for the values marked "sync: false"; they are never stored in this file.
+services:
+  - type: web
+    name: frasa-hq
+    runtime: node
+    region: virginia            # closest Render region to Aruba
+    plan: starter               # always on; the free plan sleeps and makes the first visit slow
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start
+    healthCheckPath: /login
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_PUBLIC_SUPABASE_URL        # Supabase > Settings > API > Project URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY   # Supabase anon / publishable key
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY       # Supabase service_role / secret key (server only)
+        sync: false
+      - key: NEXT_PUBLIC_SITE_URL            # the app's public address, e.g. https://frasa-hq.onrender.com
+        sync: false

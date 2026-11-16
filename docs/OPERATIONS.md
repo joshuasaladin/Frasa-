@@ -36,7 +36,13 @@ works).
 
 ### 2. The app
 
-Set these environment variables on the host, then deploy the repository:
+**On Render:** the repository includes a Blueprint (`render.yaml`). In the Render dashboard switch to
+the **Frasa** workspace, choose **New → Blueprint**, connect this repository and branch, and enter
+the four values it asks for. Render builds and starts the app and redeploys on every push. The
+`NEXT_PUBLIC_…` values are built into the app, so after changing one, trigger a new deploy. Once the
+service has its address, put it in `NEXT_PUBLIC_SITE_URL` and in Supabase's *Site URL*.
+
+On any other host, set these environment variables, then deploy the repository:
 
 | Variable | Value |
 | --- | --- |
